@@ -1,12 +1,14 @@
-FROM golang:1.6
-RUN go get -u -v github.com/derekparker/delve/cmd/dlv
-EXPOSE 2345
+FROM golang:1.13
 
-RUN mkdir -p /go/src/app
-WORKDIR /go/src/app
-COPY . /go/src/app
-RUN go-wrapper download
-RUN go-wrapper install
+RUN go get -u github.com/go-delve/delve/cmd/dlv
+RUN mkdir app
+WORKDIR /app
+COPY . .
 
+RUN go build -gcflags "all=-N -l" -o ./webapp
+RUN chmod +x webapp
+
+EXPOSE 40000
 EXPOSE 8080
-CMD ["dlv", "debug", "--headless", "--listen=:2345", "--log"]
+
+CMD dlv --listen=:40000 --headless=true --api-version=2 --accept-multiclient exec ./webapp --continue
